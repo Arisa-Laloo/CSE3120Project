@@ -1,0 +1,74 @@
+name: compilation workflow
+
+on:
+  push:
+    branches:
+      - main
+      
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up MSVC tools
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Show tool paths
+        shell: cmd
+        run: |
+          where ml
+          where link
+
+      - name: Set Irvine paths if present
+        shell: cmd
+        run: |
+          if exist "%GITHUB_WORKSPACE%\Irvine" (
+            set "INCLUDE=%GITHUB_WORKSPACE%\Irvine;%INCLUDE%"
+            set "LIB=%GITHUB_WORKSPACE%\Irvine;%LIB%"
+            echo Irvine paths configured
+          ) else (
+            echo Irvine folder not found in repo root
+          )
+
+      - name: Run compile commands
+        shell: cmd
+        run: |
+          if not exist compile.txt (
+            echo ERROR: compile.txt not found
+            exit /b 2
+          )
+
+          echo ==== compile.txt ====
+          type compile.txt
+          echo =====================
+
+          setlocal EnableDelayedExpansion
+          for /f "usebackq delims=" %%L in ("compile.txt") do (
+            set "LINE=%%L"
+            if not "!LINE!"=="" (
+              echo !LINE! | findstr /b /c:";" /c:"#">nul
+              if errorlevel 1 (
+                echo.
+                echo ^>^>^> !LINE!
+                call !LINE!
+                if errorlevel 1 exit /b !errorlevel!
+              )
+            )
+          )
+
+      - name: Upload build outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: revu-build-results
+          path: |
+            **/*.exe
+            **/*.obj
+            **/*.lst
+            **/*.mapions to build,
+          echo test, and deploy your project.
