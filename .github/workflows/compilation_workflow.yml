@@ -29,7 +29,7 @@ jobs:
       - name: Compile MASM project
         shell: cmd
         run: |
-          ml /c /coff /I Irvine main.asm
+          ml /c /coff /I Irvine Contest1.asm
           link /SUBSYSTEM:CONSOLE main.obj /LIBPATH:Irvine Irvine32.lib kernel32.lib user32.lib
 
       - name: Upload build artifacts
